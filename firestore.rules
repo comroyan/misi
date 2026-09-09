@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAdmin() {
+      return request.auth != null && (
+        request.auth.token.email != null ||
+        request.auth.token.role == 'admin'
+      );
+    }
+
+    // Public missions catalog
+    match /missions/{missionId} {
+      allow read: if resource.data.status == 'PUBLISHED' || isAdmin();
+      allow write: if isAdmin();
+      
+      match /steps/{stepId} {
+        allow read: if true;
+        allow write: if isAdmin();
+      }
+    }
+
+    // Categories
+    match /missionCategories/{catId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Visitors (Anonymous identification)
+    match /visitors/{visitorId} {
+      allow read, write: if true;
+    }
+
+    // Participations
+    match /participations/{participationId} {
+      allow read: if true;
+      allow create: if true;
+      allow update: if request.resource.data.status in ['STARTED', 'IN_PROGRESS', 'SUBMITTED', 'UNDER_REVIEW'] || isAdmin();
+      allow delete: if isAdmin();
+
+      match /answers/{stepId} {
+        allow read, write: if true;
+      }
+    }
+
+    // Submissions
+    match /submissions/{submissionId} {
+      allow read: if true;
+      allow create: if true;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Payments (Admin only)
+    match /payments/{paymentId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Banners
+    match /banners/{bannerId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Platform Settings
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Audit Logs
+    match /auditLogs/{logId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Risk Events
+    match /riskEvents/{riskId} {
+      allow read, write: if true;
+    }
+  }
+}

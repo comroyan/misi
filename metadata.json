@@ -1,0 +1,6 @@
+{
+  "name": "MisiKu",
+  "description": "Platform misi berhadiah tugas mikro harian dan reward instan tanpa login ribet.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
