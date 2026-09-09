@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Lock, Mail, ShieldCheck, ArrowLeft, KeyRound, Eye, EyeOff } from 'lucide-react';
-import { verifyAdminCredentials, getAdminAuthData } from '../../lib/firebase';
+import { Lock, Mail, ArrowLeft, KeyRound, Eye, EyeOff } from 'lucide-react';
+import { verifyAdminCredentials } from '../../lib/firebase';
 
 interface AdminLoginPageProps {
   onLoginSuccess: (email: string) => void;
@@ -34,17 +34,6 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
       setError(err.message || 'Gagal memverifikasi login admin.');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleDemoLogin = async () => {
-    try {
-      const auth = await getAdminAuthData();
-      sessionStorage.setItem('misiku_admin_auth', auth.email);
-      onLoginSuccess(auth.email);
-    } catch {
-      sessionStorage.setItem('misiku_admin_auth', 'admin@misiku.id');
-      onLoginSuccess('admin@misiku.id');
     }
   };
 
@@ -132,30 +121,16 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-11 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white font-semibold text-xs transition-colors shadow-xs flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full h-11 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white font-semibold text-xs transition-colors shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 <KeyRound className="w-4 h-4" />
                 <span>{isLoading ? 'Memverifikasi...' : 'Masuk ke Dashboard'}</span>
               </button>
             </div>
           </form>
-
-          {/* Quick Demo pass for instant evaluation */}
-          <div className="mt-4 pt-4 border-t border-zinc-100 text-center">
-            <p className="text-[11px] text-zinc-500 mb-2">
-              Akses cepat pengujian (Default: admin123456):
-            </p>
-            <button
-              type="button"
-              onClick={handleDemoLogin}
-              className="w-full h-9 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>Masuk Langsung sebagai Admin Demo</span>
-            </button>
-          </div>
         </div>
       </div>
     </div>
   );
 };
+
