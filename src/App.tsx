@@ -30,6 +30,9 @@ import {
   saveMission,
   deleteMission,
   saveBanners,
+  subscribeToMissions,
+  subscribeToSubmissions,
+  subscribeToPayments,
 } from './lib/firebase';
 import { getVisitorSession, saveVisitorIdentity } from './utils/visitor';
 import { TopHeader } from './components/Navigation/TopHeader';
@@ -123,9 +126,25 @@ export default function App() {
 
     refreshAllData();
 
+    // Subscribe to live Firestore collections
+    const unsubMissions = subscribeToMissions((updatedMissions) => {
+      setMissions(updatedMissions);
+    });
+
+    const unsubSubmissions = subscribeToSubmissions((updatedSubmissions) => {
+      setSubmissions(updatedSubmissions);
+    });
+
+    const unsubPayments = subscribeToPayments((updatedPayments) => {
+      setPayments(updatedPayments);
+    });
+
     return () => {
       window.removeEventListener('hashchange', checkAdminRoute);
       window.removeEventListener('popstate', checkAdminRoute);
+      unsubMissions();
+      unsubSubmissions();
+      unsubPayments();
     };
   }, []);
 

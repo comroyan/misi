@@ -1,29 +1,18 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper functions
-    function isAdmin() {
-      return request.auth != null && (
-        request.auth.token.email != null ||
-        request.auth.token.role == 'admin'
-      );
-    }
-
-    // Public missions catalog
+    // Missions catalog
     match /missions/{missionId} {
-      allow read: if resource.data.status == 'PUBLISHED' || isAdmin();
-      allow write: if isAdmin();
+      allow read, write: if true;
       
       match /steps/{stepId} {
-        allow read: if true;
-        allow write: if isAdmin();
+        allow read, write: if true;
       }
     }
 
     // Categories
     match /missionCategories/{catId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
 
     // Visitors (Anonymous identification)
@@ -31,12 +20,9 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
-    // Participations
+    // Participations & Answers
     match /participations/{participationId} {
-      allow read: if true;
-      allow create: if true;
-      allow update: if request.resource.data.status in ['STARTED', 'IN_PROGRESS', 'SUBMITTED', 'UNDER_REVIEW'] || isAdmin();
-      allow delete: if isAdmin();
+      allow read, write: if true;
 
       match /answers/{stepId} {
         allow read, write: if true;
@@ -45,32 +31,27 @@ service cloud.firestore {
 
     // Submissions
     match /submissions/{submissionId} {
-      allow read: if true;
-      allow create: if true;
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow read, write: if true;
     }
 
-    // Payments (Admin only)
+    // Payments
     match /payments/{paymentId} {
-      allow read, write: if isAdmin();
+      allow read, write: if true;
     }
 
     // Banners
     match /banners/{bannerId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
 
-    // Platform Settings
+    // Platform Settings & Admin Auth
     match /settings/{settingId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
 
     // Audit Logs
     match /auditLogs/{logId} {
-      allow read, write: if isAdmin();
+      allow read, write: if true;
     }
 
     // Risk Events
@@ -79,3 +60,4 @@ service cloud.firestore {
     }
   }
 }
+

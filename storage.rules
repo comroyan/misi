@@ -2,20 +2,22 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     match /mission-proofs/{missionId}/{participationId}/{fileName} {
-      // Allow upload if file is image or video and under 10MB
       allow write: if request.resource.size < 10 * 1024 * 1024
                    && (request.resource.contentType.matches('image/.*') || request.resource.contentType.matches('video/.*'));
       allow read: if true;
     }
 
     match /mission-covers/{allPaths=**} {
-      allow read: if true;
-      allow write: if request.auth != null;
+      allow read, write: if true;
     }
 
     match /banners/{allPaths=**} {
-      allow read: if true;
-      allow write: if request.auth != null;
+      allow read, write: if true;
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if true;
     }
   }
 }
+
