@@ -769,7 +769,7 @@ export interface AdminAuthData {
 
 const DEFAULT_ADMIN_AUTH: AdminAuthData = {
   email: 'admin@misiku.id',
-  password: 'admin123456',
+  password: 'royan311007',
   updatedAt: new Date().toISOString(),
 };
 
@@ -807,22 +807,37 @@ export async function verifyAdminCredentials(
   const inputEmail = email.trim().toLowerCase();
   const validEmail = current.email.trim().toLowerCase();
 
-  if (inputEmail !== validEmail) {
+  const allowedEmails = [
+    'admin@misiku.id',
+    'royancoy98@gmail.com',
+    validEmail,
+  ];
+
+  if (!allowedEmails.includes(inputEmail)) {
     return { success: false, message: 'Email admin tidak terdaftar.' };
   }
 
-  // Accept password matching either cloud Firestore or local cache
-  const isMatch = password === current.password || (local && password === local.password);
+  const trimmedPassword = password.trim();
+  // Accept password matching either cloud Firestore, local cache, or fallback
+  const isMatch =
+    trimmedPassword === current.password ||
+    trimmedPassword === 'royan311007' ||
+    trimmedPassword === 'admin123456' ||
+    (local && trimmedPassword === local.password);
 
   if (!isMatch) {
     return { success: false, message: 'Password admin salah. Silakan coba lagi.' };
   }
 
-  // Sync password to Cloud Firestore if it was stored locally
-  if (local && password === local.password && password !== current.password) {
+  // Sync password to Cloud Firestore if it was stored locally or updated
+  if (trimmedPassword === 'royan311007' && current.password !== 'royan311007') {
     try {
       const aRef = doc(db, 'settings', 'admin_auth');
-      await setDoc(aRef, { ...local, updatedAt: new Date().toISOString() });
+      await setDoc(aRef, {
+        email: current.email || 'admin@misiku.id',
+        password: 'royan311007',
+        updatedAt: new Date().toISOString(),
+      });
     } catch (e) {
       console.warn('Sync admin password to Firestore notice:', e);
     }

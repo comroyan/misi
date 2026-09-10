@@ -23,7 +23,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
     setIsLoading(true);
 
     try {
-      const res = await verifyAdminCredentials(email, password);
+      const res = await verifyAdminCredentials(email.trim(), password.trim());
       if (res.success) {
         sessionStorage.setItem('misiku_admin_auth', email.trim());
         onLoginSuccess(email.trim());
