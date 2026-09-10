@@ -32,6 +32,8 @@ export const AdminMissionsPage: React.FC<AdminMissionsPageProps> = ({
 }) => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'PUBLISHED' | 'PAUSED'>('ALL');
+  const [missionToDelete, setMissionToDelete] = useState<Mission | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const filtered = missions.filter((m) => {
     if (statusFilter !== 'ALL' && m.status !== statusFilter) return false;
@@ -113,80 +115,145 @@ export const AdminMissionsPage: React.FC<AdminMissionsPageProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 text-zinc-700">
-              {filtered.map((mission) => (
-                <tr key={mission.id} className="hover:bg-zinc-50/60 transition-colors">
-                  <td className="px-4 py-3.5">
-                    <div className="font-semibold text-zinc-900 text-xs sm:text-sm">
-                      {mission.title}
-                    </div>
-                    <div className="text-zinc-500 text-[11px] mt-0.5">
-                      {mission.brandName} • {mission.estimatedMinutes} menit
-                    </div>
-                  </td>
-                  <td className="px-4 py-3.5 font-bold text-emerald-600">
-                    {formatRupiah(mission.rewardAmount)}
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <span className="font-medium text-zinc-800">
-                      {mission.steps.length} langkah
-                    </span>
-                  </td>
-                  <td className="px-4 py-3.5 text-zinc-600">
-                    {mission.takenSlots} / {mission.maxSlots}
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <span
-                      className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        mission.status === 'PUBLISHED'
-                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                          : 'bg-amber-100 text-amber-800 border border-amber-200'
-                      }`}
-                    >
-                      {mission.status === 'PUBLISHED' ? 'Aktif' : 'Dijeda'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3.5 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <button
-                        onClick={() => onEditMission(mission)}
-                        className="p-1.5 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-100 text-zinc-700"
-                        title="Edit Misi & Langkah"
-                      >
-                        <Edit className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => onToggleStatus(mission)}
-                        className="p-1.5 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-100 text-zinc-700"
-                        title={mission.status === 'PUBLISHED' ? 'Jeda Misi' : 'Aktifkan Misi'}
-                      >
-                        {mission.status === 'PUBLISHED' ? (
-                          <Pause className="w-3.5 h-3.5 text-amber-600" />
-                        ) : (
-                          <Play className="w-3.5 h-3.5 text-emerald-600" />
-                        )}
-                      </button>
-                      <button
-                        onClick={() => onDuplicateMission(mission)}
-                        className="p-1.5 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-100 text-zinc-700"
-                        title="Duplikat Misi"
-                      >
-                        <Copy className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => onDeleteMission(mission.id)}
-                        className="p-1.5 rounded-lg border border-zinc-200 bg-white hover:bg-rose-50 text-rose-600"
-                        title="Hapus Misi"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-12 text-center text-zinc-500">
+                    <Target className="w-8 h-8 mx-auto text-zinc-300 mb-2" />
+                    <p className="font-semibold text-zinc-700 text-sm">Belum ada misi</p>
+                    <p className="text-xs text-zinc-500 mt-1">
+                      {search
+                        ? 'Tidak ada misi yang cocok dengan kata kunci pencarian.'
+                        : 'Misi bawaan default telah dihapus. Klik tombol "Tambah Misi Baru" di atas untuk mulai membuat misi Anda sendiri.'}
+                    </p>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filtered.map((mission) => (
+                  <tr key={mission.id} className="hover:bg-zinc-50/60 transition-colors">
+                    <td className="px-4 py-3.5">
+                      <div className="font-semibold text-zinc-900 text-xs sm:text-sm">
+                        {mission.title}
+                      </div>
+                      <div className="text-zinc-500 text-[11px] mt-0.5">
+                        {mission.brandName} • {mission.estimatedMinutes} menit
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5 font-bold text-emerald-600">
+                      {formatRupiah(mission.rewardAmount)}
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <span className="font-medium text-zinc-800">
+                        {mission.steps.length} langkah
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5 text-zinc-600">
+                      {mission.takenSlots} / {mission.maxSlots}
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <span
+                        className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          mission.status === 'PUBLISHED'
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                            : 'bg-amber-100 text-amber-800 border border-amber-200'
+                        }`}
+                      >
+                        {mission.status === 'PUBLISHED' ? 'Aktif' : 'Dijeda'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => onEditMission(mission)}
+                          className="p-1.5 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-100 text-zinc-700"
+                          title="Edit Misi & Langkah"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => onToggleStatus(mission)}
+                          className="p-1.5 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-100 text-zinc-700"
+                          title={mission.status === 'PUBLISHED' ? 'Jeda Misi' : 'Aktifkan Misi'}
+                        >
+                          {mission.status === 'PUBLISHED' ? (
+                            <Pause className="w-3.5 h-3.5 text-amber-600" />
+                          ) : (
+                            <Play className="w-3.5 h-3.5 text-emerald-600" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => onDuplicateMission(mission)}
+                          className="p-1.5 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-100 text-zinc-700"
+                          title="Duplikat Misi"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setMissionToDelete(mission)}
+                          className="p-1.5 rounded-lg border border-zinc-200 bg-white hover:bg-rose-50 text-rose-600"
+                          title="Hapus Misi"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      {missionToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-zinc-200 animate-in fade-in zoom-in-95">
+            <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mb-4">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-bold text-zinc-900">
+              Hapus Misi Secara Permanen?
+            </h3>
+            <p className="text-xs text-zinc-600 mt-2 leading-relaxed">
+              Apakah Anda yakin ingin menghapus misi <span className="font-semibold text-zinc-900">"{missionToDelete.title}"</span>? Tindakan ini akan menghapus dokumen misi secara permanen dari Cloud Firestore dan tidak dapat dibatalkan.
+            </p>
+
+            <div className="mt-6 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setMissionToDelete(null)}
+                className="h-10 px-4 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-100 text-zinc-700 text-xs font-semibold transition-colors disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={async () => {
+                  setIsDeleting(true);
+                  try {
+                    await onDeleteMission(missionToDelete.id);
+                  } finally {
+                    setIsDeleting(false);
+                    setMissionToDelete(null);
+                  }
+                }}
+                className="h-10 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs disabled:opacity-50"
+              >
+                {isDeleting ? (
+                  <span>Menghapus...</span>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Ya, Hapus Permanen</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

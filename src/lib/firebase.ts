@@ -7,6 +7,7 @@ import {
   getDocs,
   setDoc,
   updateDoc,
+  deleteDoc,
   query,
   where,
   orderBy,
@@ -36,7 +37,6 @@ import {
 } from '../utils/tokens';
 import { maskPhoneNumber } from '../utils/formatters';
 import {
-  INITIAL_MISSIONS,
   INITIAL_CATEGORIES,
   INITIAL_BANNERS,
   INITIAL_SETTINGS,
@@ -169,32 +169,26 @@ export async function getMissions(categoryFilter?: string): Promise<Mission[]> {
       : missionsCol;
     const snap = await getDocs(q);
 
-    if (!snap.empty) {
-      const list: Mission[] = [];
-      snap.forEach((d) => list.push({ ...d.data(), id: d.id } as Mission));
-      // sync local cache
-      setLocalData(LOCAL_MISSIONS_KEY, list);
-      return list;
-    } else {
-      // Auto-seed to Cloud Firestore if collection is empty
-      for (const m of INITIAL_MISSIONS) {
-        try {
-          await setDoc(doc(db, 'missions', m.id), sanitizeForFirestore(m));
-        } catch {
-          // Ignore if background seed encounters rule notice
-        }
+    const list: Mission[] = [];
+    snap.forEach((d) => {
+      const data = d.data() as Mission;
+      if (data.status !== 'ARCHIVED') {
+        list.push({ ...data, id: d.id });
       }
-    }
+    });
+    // sync local cache
+    setLocalData(LOCAL_MISSIONS_KEY, list);
+    return list;
   } catch (err) {
     console.warn('Firestore getMissions notice:', err);
   }
 
-  // Fallback to local storage or initial seed
-  const cached = getLocalData<Mission[]>(LOCAL_MISSIONS_KEY, INITIAL_MISSIONS);
+  // Fallback to local storage cache
+  const cached = getLocalData<Mission[]>(LOCAL_MISSIONS_KEY, []);
   if (categoryFilter) {
-    return cached.filter((m) => m.categoryId === categoryFilter);
+    return cached.filter((m) => m.categoryId === categoryFilter && m.status !== 'ARCHIVED');
   }
-  return cached;
+  return cached.filter((m) => m.status !== 'ARCHIVED');
 }
 
 export async function getMissionBySlug(slug: string): Promise<Mission | null> {
@@ -210,8 +204,8 @@ export async function getMissionBySlug(slug: string): Promise<Mission | null> {
     console.warn('Firestore getMissionBySlug notice:', err);
   }
 
-  const cached = getLocalData<Mission[]>(LOCAL_MISSIONS_KEY, INITIAL_MISSIONS);
-  return cached.find((m) => m.slug === slug || m.id === slug) || null;
+  const cached = getLocalData<Mission[]>(LOCAL_MISSIONS_KEY, []);
+  return cached.find((m) => (m.slug === slug || m.id === slug) && m.status !== 'ARCHIVED') || null;
 }
 
 export async function getMissionById(id: string): Promise<Mission | null> {
@@ -225,8 +219,8 @@ export async function getMissionById(id: string): Promise<Mission | null> {
     console.warn('Firestore getMissionById notice:', err);
   }
 
-  const cached = getLocalData<Mission[]>(LOCAL_MISSIONS_KEY, INITIAL_MISSIONS);
-  return cached.find((m) => m.id === id) || null;
+  const cached = getLocalData<Mission[]>(LOCAL_MISSIONS_KEY, []);
+  return cached.find((m) => m.id === id && m.status !== 'ARCHIVED') || null;
 }
 
 export async function saveMission(
@@ -242,7 +236,7 @@ export async function saveMission(
   }
 
   // Update local cache
-  const cached = getLocalData<Mission[]>(LOCAL_MISSIONS_KEY, INITIAL_MISSIONS);
+  const cached = getLocalData<Mission[]>(LOCAL_MISSIONS_KEY, []);
   const idx = cached.findIndex((m) => m.id === mission.id);
   if (idx >= 0) {
     cached[idx] = mission;
@@ -259,15 +253,15 @@ export async function deleteMission(
 ): Promise<void> {
   try {
     const dRef = doc(db, 'missions', id);
-    await setDoc(dRef, { status: 'ARCHIVED' }, { merge: true });
+    await deleteDoc(dRef);
   } catch (err) {
     console.warn('Firestore deleteMission notice:', err);
   }
 
-  const cached = getLocalData<Mission[]>(LOCAL_MISSIONS_KEY, INITIAL_MISSIONS);
+  const cached = getLocalData<Mission[]>(LOCAL_MISSIONS_KEY, []);
   const updated = cached.filter((m) => m.id !== id);
   setLocalData(LOCAL_MISSIONS_KEY, updated);
-  await addAuditLog('DELETE_MISSION', 'MISSION', id, `Misi dihapus / diarsipkan`, adminEmail);
+  await addAuditLog('DELETE_MISSION', 'MISSION', id, `Misi dihapus permanen`, adminEmail);
 }
 
 // ----------------------------------------------------------------------
@@ -465,12 +459,15 @@ export function subscribeToMissions(
     return onSnapshot(
       mCol,
       (snap) => {
-        if (!snap.empty) {
-          const list: Mission[] = [];
-          snap.forEach((d) => list.push({ ...d.data(), id: d.id } as Mission));
-          setLocalData(LOCAL_MISSIONS_KEY, list);
-          callback(list);
-        }
+        const list: Mission[] = [];
+        snap.forEach((d) => {
+          const data = d.data() as Mission;
+          if (data.status !== 'ARCHIVED') {
+            list.push({ ...data, id: d.id });
+          }
+        });
+        setLocalData(LOCAL_MISSIONS_KEY, list);
+        callback(list);
       },
       (err) => {
         console.warn('Missions snapshot listener error:', err);

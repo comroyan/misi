@@ -121,101 +121,115 @@ export const HomePage: React.FC<HomePageProps> = ({
       </section>
 
       {/* Section: Misi Pilihan */}
-      <section className="px-4 mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-1.5">
-            <Sparkles className="w-4 h-4 text-emerald-600" />
-            <h2 className="text-sm font-bold text-zinc-900">
-              Misi Pilihan
-            </h2>
+      {activeMissions.length === 0 ? (
+        <section className="px-4 py-12 text-center my-4 bg-white border border-zinc-200 rounded-2xl mx-4">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-3">
+            <Sparkles className="w-6 h-6" />
           </div>
-          <button
-            onClick={onExploreMore}
-            className="text-xs font-medium text-zinc-500 hover:text-zinc-800"
-          >
-            Lihat Lainnya
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          {featuredMissions.map((mission) => (
-            <MissionCard
-              key={mission.id}
-              mission={mission}
-              onSelect={onSelectMission}
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* Section: Misi Baru */}
-      <section className="px-4 mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-1.5">
-            <Zap className="w-4 h-4 text-amber-500" />
-            <h2 className="text-sm font-bold text-zinc-900">
-              Misi Baru Rilis
-            </h2>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          {newMissions.map((mission) => (
-            <MissionCard
-              key={mission.id}
-              mission={mission}
-              onSelect={onSelectMission}
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* Section: Reward Menarik */}
-      {highRewardMissions.length > 0 && (
-        <section className="px-4 mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-1.5">
-              <Flame className="w-4 h-4 text-rose-500" />
-              <h2 className="text-sm font-bold text-zinc-900">
-                Reward Menarik
-              </h2>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            {highRewardMissions.map((mission) => (
-              <MissionCard
-                key={mission.id}
-                mission={mission}
-                onSelect={onSelectMission}
-              />
-            ))}
-          </div>
+          <h3 className="text-sm font-bold text-zinc-900">Belum Ada Misi Baru</h3>
+          <p className="text-xs text-zinc-500 mt-1 max-w-xs mx-auto">
+            Misi bawaan telah dibersihkan. Misi baru akan segera hadir setelah ditambahkan oleh admin!
+          </p>
         </section>
-      )}
-
-      {/* Section: Hampir Berakhir (Terbatas) */}
-      {urgentMissions.length > 0 && (
-        <section className="px-4 mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-1.5">
-              <Clock className="w-4 h-4 text-orange-500" />
-              <h2 className="text-sm font-bold text-zinc-900">
-                Slot Terbatas
-              </h2>
+      ) : (
+        <>
+          <section className="px-4 mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-emerald-600" />
+                <h2 className="text-sm font-bold text-zinc-900">
+                  Misi Pilihan
+                </h2>
+              </div>
+              <button
+                onClick={onExploreMore}
+                className="text-xs font-medium text-zinc-500 hover:text-zinc-800"
+              >
+                Lihat Lainnya
+              </button>
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            {urgentMissions.map((mission) => (
-              <MissionCard
-                key={mission.id}
-                mission={mission}
-                onSelect={onSelectMission}
-              />
-            ))}
-          </div>
-        </section>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {featuredMissions.map((mission) => (
+                <MissionCard
+                  key={mission.id}
+                  mission={mission}
+                  onSelect={onSelectMission}
+                />
+              ))}
+            </div>
+          </section>
+
+          {/* Section: Misi Baru */}
+          <section className="px-4 mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-1.5">
+                <Zap className="w-4 h-4 text-amber-500" />
+                <h2 className="text-sm font-bold text-zinc-900">
+                  Misi Baru Rilis
+                </h2>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {newMissions.map((mission) => (
+                <MissionCard
+                  key={mission.id}
+                  mission={mission}
+                  onSelect={onSelectMission}
+                />
+              ))}
+            </div>
+          </section>
+
+          {/* Section: Reward Menarik */}
+          {highRewardMissions.length > 0 && (
+            <section className="px-4 mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-1.5">
+                  <Flame className="w-4 h-4 text-rose-500" />
+                  <h2 className="text-sm font-bold text-zinc-900">
+                    Reward Menarik
+                  </h2>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                {highRewardMissions.map((mission) => (
+                  <MissionCard
+                    key={mission.id}
+                    mission={mission}
+                    onSelect={onSelectMission}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Section: Hampir Berakhir (Terbatas) */}
+          {urgentMissions.length > 0 && (
+            <section className="px-4 mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-orange-500" />
+                  <h2 className="text-sm font-bold text-zinc-900">
+                    Slot Terbatas
+                  </h2>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                {urgentMissions.map((mission) => (
+                  <MissionCard
+                    key={mission.id}
+                    mission={mission}
+                    onSelect={onSelectMission}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+        </>
       )}
     </div>
   );

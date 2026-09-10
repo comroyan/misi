@@ -342,10 +342,8 @@ export default function App() {
   };
 
   const handleDeleteMission = async (missionId: string) => {
-    if (confirm('Apakah kamu yakin ingin menghapus misi ini?')) {
-      await deleteMission(missionId, adminEmail);
-      refreshAllData();
-    }
+    await deleteMission(missionId, adminEmail);
+    refreshAllData();
   };
 
   const handleToggleMissionStatus = async (mission: Mission) => {
