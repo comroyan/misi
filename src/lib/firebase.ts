@@ -334,6 +334,31 @@ export async function getParticipationsByVisitor(visitorId: string): Promise<Par
   return cached.filter((p) => p.visitorId === visitorId);
 }
 
+export function subscribeToVisitorParticipations(
+  visitorId: string,
+  callback: (participations: Participation[]) => void
+): () => void {
+  try {
+    const pCol = collection(db, 'participations');
+    const q = query(pCol, where('visitorId', '==', visitorId));
+    return onSnapshot(
+      q,
+      (snap) => {
+        const list: Participation[] = [];
+        snap.forEach((d) => list.push({ ...d.data(), id: d.id } as Participation));
+        setLocalData(LOCAL_PARTICIPATIONS_KEY, list);
+        callback(list);
+      },
+      (err) => {
+        console.warn('Visitor participations snapshot error:', err);
+      }
+    );
+  } catch (err) {
+    console.warn('Failed to attach visitor participations listener:', err);
+    return () => {};
+  }
+}
+
 export async function submitParticipationFinal(
   submission: Submission,
   participation: Participation
@@ -501,7 +526,7 @@ export async function updateSubmissionReview(
     cachedSubmissions[sIdx] = updatedSub;
     setLocalData(LOCAL_SUBMISSIONS_KEY, cachedSubmissions);
 
-    // Also sync corresponding participation
+    // Also sync corresponding participation in Firestore and cache
     const cachedParticipations = getLocalData<Participation[]>(LOCAL_PARTICIPATIONS_KEY, []);
     const pIdx = cachedParticipations.findIndex(
       (p) => p.id === updatedSub.participationId || p.publicToken === updatedSub.publicToken
@@ -514,6 +539,22 @@ export async function updateSubmissionReview(
         revisionReason: updatedSub.revisionReason,
       };
       setLocalData(LOCAL_PARTICIPATIONS_KEY, cachedParticipations);
+    }
+
+    if (updatedSub.participationId) {
+      try {
+        const pRef = doc(db, 'participations', updatedSub.participationId);
+        await updateDoc(
+          pRef,
+          sanitizeForFirestore({
+            status: updatedSub.status,
+            revisionStepId: updatedSub.revisionStepId || null,
+            revisionReason: updatedSub.revisionReason || null,
+          })
+        );
+      } catch (pErr) {
+        console.warn('Firestore updateDoc participation notice:', pErr);
+      }
     }
 
     // If APPROVED, auto-create Payment Record
@@ -619,6 +660,31 @@ export async function getBanners(): Promise<Banner[]> {
 
   const cached = getLocalData<Banner[]>(LOCAL_BANNERS_KEY, INITIAL_BANNERS);
   return cached.filter((b) => b.active);
+}
+
+export function subscribeToBanners(
+  callback: (banners: Banner[]) => void
+): () => void {
+  try {
+    const bCol = collection(db, 'banners');
+    return onSnapshot(
+      bCol,
+      (snap) => {
+        if (!snap.empty) {
+          const list: Banner[] = [];
+          snap.forEach((d) => list.push({ ...d.data(), id: d.id } as Banner));
+          setLocalData(LOCAL_BANNERS_KEY, list);
+          callback(list.filter((b) => b.active));
+        }
+      },
+      (err) => {
+        console.warn('Banners snapshot listener error:', err);
+      }
+    );
+  } catch (err) {
+    console.warn('Failed to attach banners listener:', err);
+    return () => {};
+  }
 }
 
 export async function getSettings(): Promise<PlatformSettings> {

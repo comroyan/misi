@@ -33,6 +33,8 @@ import {
   subscribeToMissions,
   subscribeToSubmissions,
   subscribeToPayments,
+  subscribeToBanners,
+  subscribeToVisitorParticipations,
 } from './lib/firebase';
 import { getVisitorSession, saveVisitorIdentity } from './utils/visitor';
 import { TopHeader } from './components/Navigation/TopHeader';
@@ -131,13 +133,35 @@ export default function App() {
       setMissions(updatedMissions);
     });
 
+    const session = getVisitorSession();
+
     const unsubSubmissions = subscribeToSubmissions((updatedSubmissions) => {
       setSubmissions(updatedSubmissions);
+      if (session?.visitorId) {
+        getMyParticipations(session.visitorId).then((parts) => {
+          if (parts.length > 0) setMyParticipations(parts);
+        });
+      }
     });
 
     const unsubPayments = subscribeToPayments((updatedPayments) => {
       setPayments(updatedPayments);
+      if (session?.visitorId) {
+        getMyParticipations(session.visitorId).then((parts) => {
+          if (parts.length > 0) setMyParticipations(parts);
+        });
+      }
     });
+
+    const unsubBanners = subscribeToBanners((updatedBanners) => {
+      setBanners(updatedBanners);
+    });
+
+    const unsubVisitorParts = session?.visitorId
+      ? subscribeToVisitorParticipations(session.visitorId, (liveParts) => {
+          setMyParticipations(liveParts);
+        })
+      : () => {};
 
     return () => {
       window.removeEventListener('hashchange', checkAdminRoute);
@@ -145,6 +169,8 @@ export default function App() {
       unsubMissions();
       unsubSubmissions();
       unsubPayments();
+      unsubBanners();
+      unsubVisitorParts();
     };
   }, []);
 
